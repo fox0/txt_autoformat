@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 import re
+import os
 import sys
 import subprocess
-from os.path import dirname, join
 
 
 def compile_rules(*ruleset):
@@ -16,50 +16,50 @@ def compile_rules(*ruleset):
     return result
 
 
-re_text_pre = compile_rules(
-    (r'\/\*.*?\*\/', ''),  # /* ... */
-    (r'\n+', '\n\n'),
-    (r'<tab>', ''),
-)
+def compile_rules_word(*ruleset):
+    result = []
+    for old, new in ruleset:
+        result.append((r'\b%s\b' % old, new))
+        result.append((r'\b%s\b' % old.title(), new.title()))
+    return compile_rules(*result)
 
-re_line = compile_rules(
-    (r'^[\s01]+$', ''),
-    (r'^\*{3}$', '\n<center>* * *</center>'),
-)
 
-_words = (
+rules_pre = compile_rules_word(
     ('ее', 'её'),
     ('еще', 'ещё'),
     ('нее', 'неё'),
     ('мое', 'моё'),
     ('все-таки', 'всё-таки'),
     ('насчет', 'насчёт'),
+) + compile_rules(
+
 )
-re_words = [
+
+rules_post = compile_rules(
+    (r'\*{3}\n', '\n<center>* * *</center>'),
+    (r"'''(.*?)'''", r'<b>\1</b>'),
     (r"''(.*?)''", r'<i>\1</i>'),
-]
-for v, n in _words:
-    re_words.append((r'\b%s\b' % v, n))
-    re_words.append((r'\b%s\b' % v.title(), n.title()))
-re_text_post = compile_rules(*re_words)
-del _words
-del re_words
+)
 
-
-def main(text):
-    # text = replace_all(re_text_pre, text)
-    text = '\n'.join([replace_all(re_line, line) for line in text.split('\n')])
-    f = join(dirname(__file__), 'wikificator.js')
-    text = run_process(('js', f), text)
-    # todo ё-фикатор
-    text = replace_all(re_text_post, text)
-    text = text.replace('И. И.', 'И.И.')
-    return '''\
+template = '''\
 <tab>
 %s
 <tab>
 
-Число слов: %d''' % (text, len(text.split(' ')))
+--
+Число слов: %d
+
+(%d символов без пробелов)'''
+
+
+def main(text):
+    text = replace_all(rules_pre, text)
+    text = run_wikificator(text)
+    text = replace_all(rules_post, text)
+
+    count_words = len(re.findall(r'\w+', text))
+    count_ch = len(re.sub(r'\s+', '', text))
+    return template % (text, count_words, count_ch)
 
 
 def replace_all(re_rules, text):
@@ -69,10 +69,10 @@ def replace_all(re_rules, text):
     return result
 
 
-def run_process(cmd, data):
-    bytes_in = bytes(data.encode('utf-8'))
-    bytes_out = subprocess.check_output(cmd, input=bytes_in)
-    return bytes_out.decode('utf-8')
+def run_wikificator(text):
+    f = os.path.join(os.path.dirname(__file__), 'wikificator.js')
+    b = bytes(text.encode('utf-8'))
+    return subprocess.check_output(('js', f), input=b).decode('utf-8')
 
 
 if __name__ == '__main__':
