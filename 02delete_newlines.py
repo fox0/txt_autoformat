@@ -4,14 +4,16 @@
 Внешняя команда для geany, восстанавливающая скопированный текст из pdf
 """
 import sys
+import re
 
 rules = (
-    ('-\n', ''),
-    ('\n', ' '),
+    (r'\-\n', ''),
+    (r'\n', ' '),
+    (r'\s\[\d+\]', ''),
 )
 
 if __name__ == '__main__':
     t = sys.stdin.read()
     for old, new in rules:
-        t = t.replace(old, new)
+        t = re.sub(old, new, t)
     sys.stdout.write(t)

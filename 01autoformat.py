@@ -32,11 +32,11 @@ rules_pre = compile_rules_word(
     ('все-таки', 'всё-таки'),
     ('насчет', 'насчёт'),
 ) + compile_rules(
-
+    (r'<center>\*{3}</center>', '***'),
+    (r'\*{3}', '\n<center>* * *</center>'),
 )
 
 rules_post = compile_rules(
-    (r'\*{3}\n', '\n<center>* * *</center>'),
     (r"'''(.*?)'''", r'<b>\1</b>'),
     (r"''(.*?)''", r'<i>\1</i>'),
 )
