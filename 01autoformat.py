@@ -36,13 +36,17 @@ def insert_dash(*words):
         result.append((r'\b%s\b' % '\s'.join(bits), '-'.join(bits)))
         bits[0] = bits[0].title()
         result.append((r'\b%s\b' % '\s'.join(bits), '-'.join(bits)))
+        bits[0] = bits[0].upper()
+        bits[1] = bits[1].upper()
+        result.append((r'\b%s\b' % '\s'.join(bits), '-'.join(bits)))
     return compile_rules(*result)
 
 
 rules_pre += insert_dash('из за', 'из под', 'кое как', 'все еще', 'все ещё',
     'все таки', 'кое чего', 'кто то', 'что то', 'наконец то', 'вообще то',
-    'когда то', 'куда то', 'чего то', 'как то', 'общем то', 
-    'во первых', 'во вторых',
+    'когда то', 'куда то', 'чего то', 'как то', 'общем то', 'чему то',
+    'во первых', 'во вторых', 'чем то', 'кое что', 'где то', 'чей то',
+    'кого то', 'почему то',
 )
 rules_pre += replace_word(
     ('ее', 'её'),
@@ -55,6 +59,7 @@ rules_pre += replace_word(
 rules_pre += compile_rules(
     (r'\bкак(\w{2,3})\sто\b', r'как\1-то'),
     (r'\sнибудь\b', '-нибудь'),
+    (r'\sка\b', '-ка'),
     (r'<center>\*{3}</center>', '***'),
     (r'\*{3}', '\n<center>* * *</center>'),
     (r'\n\s+', '\n\n'),
@@ -72,6 +77,8 @@ rules_post += compile_rules(
     (r"'''(.*?)'''", r'<b>\1</b>'),
     (r"''(.*?)''", r'<i>\1</i>'),
     (r'\n—\s(.*?)([\.\?!…])\s—\s(\w)', fucking_dot),
+    (r'\?…', '?..'),
+    (r'!…', '!..'),
 )
 
 template = '''\
