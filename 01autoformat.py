@@ -6,17 +6,22 @@ import sys
 import subprocess
 
 
+rules_pre = []
+rules_post = []
+
+
 def compile_rules(*ruleset):
     result = []
     for expr, new_val in ruleset:
         try:
             result.append((re.compile(expr), new_val))
+            # print(expr, new_val)
         except Exception as e:
             sys.stderr.write('error compile: %s. expr=%s' % (e, expr))
     return result
 
 
-def compile_rules_word(*ruleset):
+def replace_word(*ruleset):
     result = []
     for old, new in ruleset:
         result.append((r'\b%s\b' % old, new))
@@ -24,38 +29,30 @@ def compile_rules_word(*ruleset):
     return compile_rules(*result)
 
 
-rules_pre = compile_rules_word(
+def insert_dash(*words):
+    result = []
+    for i in words:
+        bits = i.split(' ', 1)
+        result.append((r'\b%s\b' % '\s'.join(bits), '-'.join(bits)))
+        bits[0] = bits[0].title()
+        result.append((r'\b%s\b' % '\s'.join(bits), '-'.join(bits)))
+    return compile_rules(*result)
+
+
+rules_pre += insert_dash('из за', 'из под', 'кое как', 'все еще', 'все ещё',
+    'все таки', 'кое чего', 'кто то', 'что то', 'наконец то', 'вообще то',
+    'когда то', 'куда то', 'чего то', 'как то', 'общем то', 
+    'во первых', 'во вторых',
+)
+rules_pre += replace_word(
     ('ее', 'её'),
     ('еще', 'ещё'),
-    ('все еще', 'всё ещё'),
-    ('все ещё', 'всё ещё'),
     ('нее', 'неё'),
     ('мое', 'моё'),
     ('все-таки', 'всё-таки'),
-    ('все таки', 'всё-таки'),
     ('насчет', 'насчёт'),
-
-    # todo func " " -> "-"
-    ('из за', 'из-за'),
-    ('из под', 'из-под'),
-    ('кое как', 'кое-как'),
-    
-    ('кто то', 'кто-то'),
-    ('что то', 'что-то'),
-
-    ('наконец то', 'наконец-то'),  # "Наконец то" todo
-    ('вообще то', 'вообще-то'),
-    ('когда то', 'когда-то'),
-    ('куда то', 'куда-то'),
-    ('чего то', 'чего-то'),
-    ('как то', 'как-то'),
-    ('кое чего', 'кое-чего'),
-    ('общем то', 'общем-то'),
-    
-    ('во первых', 'во-первых'),
-    ('во вторых', 'во-вторых'),
-
-) + compile_rules(
+)
+rules_pre += compile_rules(
     (r'\bкак(\w{2,3})\sто\b', r'как\1-то'),
     (r'\sнибудь\b', '-нибудь'),
     (r'<center>\*{3}</center>', '***'),
@@ -71,7 +68,7 @@ def fucking_dot(m):
     return '\n— %s%s — %s' % (s1, s2, s3)
     
 
-rules_post = compile_rules(
+rules_post += compile_rules(
     (r"'''(.*?)'''", r'<b>\1</b>'),
     (r"''(.*?)''", r'<i>\1</i>'),
     (r'\n—\s(.*?)([\.\?!…])\s—\s(\w)', fucking_dot),
