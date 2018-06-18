@@ -6,6 +6,8 @@ import sys
 import subprocess
 
 
+BASE_DIR = os.path.dirname(__file__)
+
 rules_pre = []
 rules_post = []
 
@@ -14,52 +16,21 @@ def compile_rules(*ruleset):
     result = []
     for expr, new_val in ruleset:
         try:
-            result.append((re.compile(expr), new_val))
+            result.append((re.compile(expr, re.I), new_val))
             # print(expr, new_val)
         except Exception as e:
             sys.stderr.write('error compile: %s. expr=%s' % (e, expr))
     return result
 
 
-def replace_word(*ruleset):
-    result = []
-    for old, new in ruleset:
-        result.append((r'\b%s\b' % old, new))
-        result.append((r'\b%s\b' % old.title(), new.title()))
-    return compile_rules(*result)
-
-
-def insert_dash(*words):
-    result = []
-    for i in words:
-        bits = i.split(' ', 1)
-        result.append((r'\b%s\b' % '\s'.join(bits), '-'.join(bits)))
-        bits[0] = bits[0].title()
-        result.append((r'\b%s\b' % '\s'.join(bits), '-'.join(bits)))
-        bits[0] = bits[0].upper()
-        bits[1] = bits[1].upper()
-        result.append((r'\b%s\b' % '\s'.join(bits), '-'.join(bits)))
-    return compile_rules(*result)
-
-
-rules_pre += insert_dash('из за', 'из под', 'кое как', 'все еще', 'все ещё',
-    'все таки', 'кое чего', 'кто то', 'что то', 'наконец то', 'вообще то',
-    'когда то', 'куда то', 'чего то', 'как то', 'общем то', 'чему то',
-    'во первых', 'во вторых', 'чем то', 'кое что', 'где то', 'чей то',
-    'кого то', 'почему то',
-)
-rules_pre += replace_word(
-    ('ее', 'её'),
-    ('еще', 'ещё'),
-    ('нее', 'неё'),
-    ('мое', 'моё'),
-    ('все-таки', 'всё-таки'),
-    ('насчет', 'насчёт'),
-)
 rules_pre += compile_rules(
-    (r'\bкак(\w{2,3})\sто\b', r'как\1-то'),
-    (r'\sнибудь\b', '-нибудь'),
-    (r'\sка\b', '-ка'),
+    (r'\s(нибудь|ка)\b', r'-\1'),
+    (r'\b(как\w{2,3}|кто|что|чем|где|чей|как|кого|куда|чего|чему|общем|когда|почему|вообще|наконец)\s(то)\b', r'\1-\2'),
+    (r'\b(во)\s(первых|вторых)\b', r'\1-\2'),
+    (r'\b(из)\s(за|под)\b', r'\1-\2'),
+    (r'\b(кое)\s(как|что|чего)\b', r'\1-\2'),
+    (r'\b(все|всё)\s(таки)\b', r'\1-\2'),  # после наречий, частиц и глаголов соединяется с ними дефисом
+    
     (r'<center>\*{3}</center>', '***'),
     (r'\*{3}', '\n<center>* * *</center>'),
     (r'\n\s+', '\n\n'),
@@ -74,12 +45,17 @@ def fucking_dot(m):
     
 
 rules_post += compile_rules(
-    (r"'''(.*?)'''", r'<b>\1</b>'),
-    (r"''(.*?)''", r'<i>\1</i>'),
     (r'\n—\s(.*?)([\.\?!…])\s—\s(\w)', fucking_dot),
     (r'\?…', '?..'),
     (r'!…', '!..'),
+    (r'\bвсе\sещё\b', 'всё ещё'),
+    (r'\bвсе\sтаки\b', 'всё-таки'),
+    
+    # fix wiki
+    (r"'''(.*?)'''", r'<b>\1</b>'),
+    (r"''(.*?)''", r'<i>\1</i>'),
 )
+
 
 template = '''\
 <tab>
@@ -94,7 +70,8 @@ template = '''\
 
 def main(text):
     text = replace_all(rules_pre, text)
-    text = run_wikificator(text)
+    text = run_js(text, 'wikificator.js')
+    text = run_js(text, 'node_modules/eyo/bin/cli.js', '--stdin')
     text = replace_all(rules_post, text)
 
     count_words = len(re.findall(r'\w+', text))
@@ -109,10 +86,10 @@ def replace_all(re_rules, text):
     return result
 
 
-def run_wikificator(text):
-    f = os.path.join(os.path.dirname(__file__), 'wikificator.js')
+def run_js(text, filename, *args):
+    f = os.path.join(BASE_DIR, filename)
     b = bytes(text.encode('utf-8'))
-    return subprocess.check_output(('js', f), input=b).decode('utf-8')
+    return subprocess.check_output(('js', f, *args), input=b).decode('utf-8')
 
 
 if __name__ == '__main__':
