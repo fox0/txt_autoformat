@@ -40,13 +40,14 @@ def fucking_dot(m):
     s1, s2, s3 = m.group(1), m.group(2), m.group(3)
     s2 = {'.': ','}.get(s2, s2)
     s3 = s3.lower()
-    return '\n— %s%s — %s' % (s1, s2, s3)
+    return '\n— %s%s — %s' % (s1, s2, s3)  # '\u00A0'
     
 
 rules_post = compile_rules(
-    (r'\n—\s(.*?)([\.\?!…])\s—\s(\w)', fucking_dot),
+    (r'\n—\s(.*?)([\.\?!…]) —\s(\w)', fucking_dot),  # " " '\u00A0'; // non-breaking space
     (r'\?…', '?..'),
     (r'!…', '!..'),
+    (r'…\.', '…'),
     (r'\bвсе\sещё\b', 'всё ещё'),
     (r'\bвсе\sтаки\b', 'всё-таки'),
     
