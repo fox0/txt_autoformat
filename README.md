@@ -6,5 +6,5 @@
 
 ### Зависимости
 ```
-npm install eyo
+npm install eyo@4.0.1  #eyo-kernel@2.4.0
 ```
