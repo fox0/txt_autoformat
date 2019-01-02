@@ -24,40 +24,58 @@ def replace_all(rules, text):
 
 rules_pre = compile_rules(
     # dash
-    (r'\s(нибудь|ка)\b', r'-\1'),
-    (r'\b(как\w{2,3}|как|кои|кто|что|чем|где|чей|так|кого|куда|чего|чему|кому|общем|когда|почему|вообще|наконец)\s(то)\b', r'\1-\2'),
     (r'\b(во)\s(первых|вторых)\b', r'\1-\2'),
     (r'\b(из)\s(за|под)\b', r'\1-\2'),
+    (r'\b(как\w{2,3}|как|кои|кто|что|чем|где|чей|так|кого|куда|чего|чему|кому|общем|когда|почему|вообще|наконец)\s(то)\b', r'\1-\2'),
     (r'\b(кое)\s(как|что|чего)\b', r'\1-\2'),
-    (r'\b(все|всё)\s(таки)\b', r'\1-\2'),  # после наречий, частиц и глаголов соединяется с ними дефисом
+    (r'\b(что)\s(либо)\b', r'\1-\2'),
+    (r'\s(нибудь|ка)\b', r'-\1'),
+    (r'\b(н)еа\b', r'\1е-а'),
+    (r'\b(все|всё|довольно)\s(таки)\b', r'\1-\2'),  # после наречий, частиц и глаголов соединяется с ними дефисом
+    
+    # ё
+    (r'\b(в)се-таки\b', r'\1сё-таки'),
+    (r'\b(в)се\s(ещё|ж|же|равно)\b', r'\1сё \2'),
+    
+    (r'\bчерез\sчур\b', 'чересчур'),
+    (r'\bс\sподряд\b', 'подряд'),
+    (r'\bв\sсамом\sделе\b', 'правда'),
+    (r'\bпонивилль\b', 'Понивиль'),
+
     # not dash
-    (r'-(бы|же|ли|что)\b', r' \1'),
+    (r'-(бы|же|ли|уж|что|лишь)\b', r' \1'),
     # common
     (r'<center>\*{3}</center>', '***'),
     (r'\*{3}', '\n<center>* * *</center>'),
     (r'\n\s+', '\n\n'),
+    # ~ (r'<tab>', ''),
 )
 
-
-def fucking_dot(m):
-    s1, s2, s3 = m.group(1), m.group(2), m.group(3)
-    s2 = {'.': ','}.get(s2, s2)
-    s3 = s3.lower()
-    return '\n— %s%s — %s' % (s1, s2, s3)  # '\u00A0'
-    
+# u = ' '  # '\u00A0'; // non-breaking space
+m = '—'  # mdash
 
 rules_post = compile_rules(
-    (r'\n—\s(.*?)([\.\?!…]) —\s(\w)', fucking_dot),  # " " '\u00A0'; // non-breaking space
-    (r'\?…', '?..'),
-    (r'!…', '!..'),
+    (r'(\?|!)…', r'\1..'),
+    (r'…(\?|!)', r'\1..'),
+    (r'\.\.(\?|!)', r'\1..'),
+    
     (r'\?\?', '?!'),
     (r'…\.', '…'),
-    (r'\b(в)се\s(ещё|равно)\b', r'\1сё \2'),
-    (r'\b(в)се-таки\b', r'\1сё-таки'),
+    
+    (r'^<tab>', ''),
+    (r'<tab>$', ''),
     
     # fix wiki
     (r"'''(.*?)'''", r'<b>\1</b>'),
     (r"''(.*?)''", r'<i>\1</i>'),
+    (r'\bбёлль\b', 'Белль'),
+    
+    (r'\n-(\w)', r'\n'+m+r' \1'),
+    # ~ (r'\n<tab>—\s+', '\n<tab>—'+u),
+    # ~ (r'\n-<tab>', '\n<tab>—'+u),
+    (r'\n<i>-', '\n<i>'+m),
+    
+    # ~ (r'\n+', '\n\n<tab>'),
 )
 
 
@@ -73,14 +91,16 @@ template = '''\
 
 
 if __name__ == '__main__':
-    text = sys.stdin.read()
     if sys.argv[1] == '--pre':
+        text = sys.stdin.read()
         text = replace_all(rules_pre, text)
+        sys.stdout.write(text)
     elif sys.argv[1] == '--post':
+        text = sys.stdin.read()
         text = replace_all(rules_post, text)
         count_words = len(re.findall(r'\w+', text))
         count_ch = len(re.sub(r'\s+', '', text))
         text = template % (text, count_words, count_ch)
+        sys.stdout.write(text)
     else:
         raise NotImplementedError
-    sys.stdout.write(text)
