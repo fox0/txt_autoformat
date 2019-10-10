@@ -12,6 +12,7 @@ def main():
     text = re.sub(r'\n', ' ', text)
     text = re.sub(r'\s\[\d+\]', '', text)
     sys.stdout.write(text)
+    sys.stdout.write('\n')
 
 
 if __name__ == '__main__':

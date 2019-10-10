@@ -58,6 +58,7 @@ def compile_pre():
         (r'\bво-время\b', 'вовремя'),
         (r'\bсхмурив\b', 'нахмурив'),
         (r'\bшопот\b', 'шёпот'),
+        (r'\bладо\b', 'ладно'),
         (r'\bтрамв', 'травм'),
         (r'\bсеръ', 'серь'),
         # имена
@@ -70,7 +71,10 @@ def compile_pre():
         (r'\bпонивилл', 'Понивил'),
 
         (r'\.-', '. -'),
+        (r',-', ', -'),
         (r' -…', ' - …'),
+        (r'</i><i>', ''),
+        (r'\s+</i>', '</i>'),
         (r'\s*\n\s*', '\n\n'),
     ))
 
@@ -81,16 +85,7 @@ def compile_pre():
         return '%s %s%s' % (dot, word, dot2)
 
     ls = '|'.join(('впрочем', 'наверное', 'видимо', 'пожалуй', 'по крайней мере', 'как правило', 'скоре[ей] всего'))
-    result.append((r'\b([,\.]?) (%s)\b([,…!\.\?])?' % ls, colon))
-
-    def colon2(m):
-        dot = m.group(1) or ','
-        word = m.group(2)
-        dot2 = m.group(3) or ','
-        return '[WARN]%s[WARN] %s[WARN]%s[WARN]' % (dot, word, dot2)
-
-    result.append((r'\b([,\.]?) (возможно|может быть)\b([,…!\.\?])?', colon2))
-
+    result.append((r'\b([,\.]?)\s+(%s)\b([,…!\.\?])?' % ls, colon))
     return compile_rules(result)
 
 
@@ -107,7 +102,6 @@ def compile_post():
         (r"'''(.*?)'''", r'<b>\1</b>'),
         (r"''(.*?)''", r'<i>\1</i>'),
         (r'</b><b>', ''),
-        (r'</i><i>', ''),
         (r'\bбёлль\b', 'Белль'),
         # fix3
         (r'<center>\*\s*\*\s*\*</center>', '***'),
@@ -120,7 +114,8 @@ def compile_post():
     nbsp = '\xa0'
     result.extend((
         (r'…-', '… ' + mdash),
-        (r'\n-', '\n%s ' % mdash),
+        (r'\n-', '\n' + mdash + nbsp),
+        (r'\n<i>-\s+', '\n<i>' + mdash + nbsp),
         # неразрывный пробел после тире
         (r'\n%s\s+' % mdash, '\n' + mdash + nbsp),
     ))

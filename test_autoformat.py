@@ -84,3 +84,15 @@ def test_pre5(rules_pre):
     assert replace_all(rules_pre, 'это, наверное были они') == 'это, наверное, были они'
     assert replace_all(rules_pre, 'это наверное, были они') == 'это, наверное, были они'
     assert replace_all(rules_pre, 'это. Наверное были они') == 'это. Наверное, были они'
+
+
+def test_pre_no_space(rules_pre):
+    assert replace_all(rules_pre, 'она призывно похлопала ресницами.- Как насчёт?..') == ''
+
+
+def test_pre_add_space(rules_pre):
+    assert replace_all(rules_pre, 'Н…напитки?') == ''
+
+
+def test_pre_add_space2(rules_pre):
+    assert replace_all(rules_pre, 'Я,наверное,') == ''
