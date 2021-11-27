@@ -68,7 +68,10 @@ def compile_pre():
         # (r'\bЭпп?л\s*Блум\b', 'Эплблум'),
         (r'\bМундансер\b', 'Мундэнсер'),
         (r'\bБон-Бон\b', 'Бон Бон'),
-        (r'\bпонивилл', 'Понивил'),
+        (r'\bБель\b', 'Белль'),
+        #(r'\bпонивилл', 'Понивил'),
+        (r'\bпонивил', 'Понивилл'),
+        (r'\bПонивиллл', 'Понивилл'),
 
         (r'\.-', '. -'),
         (r',-', ', -'),
@@ -129,7 +132,8 @@ TEMPLATE = '''\
 <tab>
 
 --
-Число слов: {count}'''
+Число слов: {count}
+Число знаков: {count2}'''
 
 
 def main():
@@ -147,7 +151,8 @@ def main():
         rules = compile_post()
         text = replace_all(rules, text)
         count_words = len(re.findall(r'\w+', text))
-        text = TEMPLATE.format(text=text, count=count_words)
+        count2 = len(re.findall(r'\w', text))
+        text = TEMPLATE.format(text=text, count=count_words, count2=count2)
     sys.stdout.write(text)
 
 
